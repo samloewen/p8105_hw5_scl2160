@@ -1,0 +1,51 @@
+---
+title: "HW 5"
+author: "Sam Loewen"
+date: "11/3/2019"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+
+library(tidyverse)
+library(rvest)
+
+set.seed(10)
+
+iris_with_missing = iris %>% 
+  map_df(~replace(.x, sample(1:150, 20), NA)) %>%
+  mutate(Species = as.character(Species))
+```
+
+# Problem 1
+
+```{r}
+fill_in_values = function(x){
+ 
+  if(is.numeric(x) == T) {
+    x[is.na(x)] = mean(x, na.rm=T)
+    }
+  if(is.character(x) == T){
+    x[is.na(x)] = replace_na("virginica")
+    }
+
+  return(x)
+ 
+}
+
+iris_with_missing <- map_df(iris_with_missing,fill_in_values)
+```
+
+#Problem 2
+
+Create a tidy dataframe containing data from all participants, including the subject ID, arm, and observations over time:
+
+Start with a dataframe containing all file names; the list.files function will help
+Iterate over file names and read in data for each subject using purrr::map and saving the result as a new variable in the dataframe
+Tidy the result; manipulate file names to include control arm and subject ID, make sure weekly observations are “tidy”, and do any other tidying that’s necessary
+Make a spaghetti plot showing observations on each subject over time, and comment on differences between groups.
+
+
+
+
+
