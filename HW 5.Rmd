@@ -33,7 +33,7 @@ fill_in_values = function(x){
  
 }
 
-iris_with_missing <- map_df(iris_with_missing,fill_in_values)
+iris_with_missing = map_df(iris_with_missing,fill_in_values)
 ```
 
 #Problem 2
@@ -41,11 +41,30 @@ iris_with_missing <- map_df(iris_with_missing,fill_in_values)
 Create a tidy dataframe containing data from all participants, including the subject ID, arm, and observations over time:
 
 Start with a dataframe containing all file names; the list.files function will help
+
 Iterate over file names and read in data for each subject using purrr::map and saving the result as a new variable in the dataframe
+
 Tidy the result; manipulate file names to include control arm and subject ID, make sure weekly observations are “tidy”, and do any other tidying that’s necessary
+
 Make a spaghetti plot showing observations on each subject over time, and comment on differences between groups.
 
+```{r}
+file_list = list.files("./data", pattern= "*.csv")
+
+study_data = map_df(paste("./data", file_list, sep = "/"), read_csv) %>% 
+  mutate(file_name = file_list) %>% 
+  separate(file_name, c("study_arm", "study_id", "csv")) %>% 
+  select(study_arm, study_id, week_1:week_8, -csv) %>% 
+  mutate(study_arm = ifelse(study_arm == "con", "control", "experimental"),
+         study_id = c(1:20))
+
+study_data
+```
+
+
+```{r}
 
 
 
+```
 
