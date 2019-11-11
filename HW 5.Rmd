@@ -10,8 +10,6 @@ output: github_document
 library(tidyverse)
 library(rvest)
 
-set.seed(10)
-
 iris_with_missing = iris %>% 
   map_df(~replace(.x, sample(1:150, 20), NA)) %>%
   mutate(Species = as.character(Species))
@@ -20,6 +18,7 @@ iris_with_missing = iris %>%
 # Problem 1
 
 ```{r}
+set.seed(1)
 fill_in_values = function(x){
  
   if(is.numeric(x) == T) {
@@ -39,6 +38,7 @@ iris_with_missing = map_df(iris_with_missing,fill_in_values)
 # Problem 2
 
 ```{r}
+set.seed(1)
 file_list = list.files("./data", pattern= "*.csv")
 
 study_data = map_df(paste("./data", file_list, sep = "/"), read_csv) %>% 
@@ -59,42 +59,28 @@ study_data %>%
     y = "observations")
 
 ```
+
 The control group consistantly had lower scores than the experimental group. The experimental group seemed to score higher over time whereas the control group stayed relatively level.
 
 # Problem 3
 
-
-First set the following design elements:
 ```{r}
-p3_data = function(n=30, beta0=2, beta1, var=50) {
+set.seed(1)
+p3_data = function(n=30, beta0=2, beta1) {
   
   sim_data = tibble(
-    x = rnorm(n),
-    y = beta0 + beta1 * x + rnorm(n)
+    x = rnorm(n, 0, 1),
+    y = beta0 + beta1 * x + rnorm(n, 0, sqrt(50))
   )
   
-  ls_fit = lm(y ~ x, data = sim_data) 
+  ls_fit = lm(y ~ x, data = sim_data) %>% 
+    broom::tidy()
   
   tibble(
-    beta0_hat = coef(ls_fit)[1],
-    beta1_hat = coef(ls_fit)[2]
+    beta1_hat = ls_fit[[2,2]],
+    beta1_p = ls_fit [[2,5]]
     
-  )
-}
-
-b1_list = list("b1_0" = 0,
-               "b1_1" = 1, 
-               "b1_2" = 2,
-               "b1_3" = 3,
-               "b1_4" = 4,
-               "b1_5" = 5,
-               "b1_6" = 6)
-
-output = vector("list", length = 7)
-
-for (i in 1:7) {
-  output[[i]] = rerun(1000, p3_data(beta1 = b1_list[[i]])) %>% 
-    bind_rows
+    )
 }
 
 sim_results_all_b1 = 
@@ -107,25 +93,63 @@ sim_results_all_b1 =
   ) %>% 
   select(-output_list) %>% 
   unnest(output_df)
+
+
 ```
 
 
+```{r}
+sim_results_all_b1 %>% 
+  mutate(reject_null = ifelse(beta1_p<.05,1,0)) %>% 
+  group_by(beta_1) %>% 
+  summarize(power = mean(reject_null)) %>% 
+  ggplot (aes(x=beta_1, y=power)) + geom_point() + geom_line() +
+  labs(title = "Power by beta1 value", 
+    x = "beta1 value", 
+    y = "Power")
+```
 
-Fix n=30
-Fix xi1 as draws from a standard Normal distribution
-Fix β0=2
-Fix σ2=50
-Set β1=0. Generate 10000 datasets from the model
+Based on the plot, power increases as effect size increases.
 
-yi=β0+β1xi1+ϵi
-with ϵi∼N[0,σ2]. For each dataset, save β^1 and the p-value arising from a test of H:β1=0 using α=0.05. Hint: to obtain the estimate and p-value, use broom::tidy to clean the output of lm.
+```{r}
+sim_results_all_b1 %>% 
+  group_by(beta_1) %>% 
+  summarize(avg_b1 = mean(beta1_hat)) %>% 
+  ggplot (aes(x=beta_1, y=avg_b1)) + geom_point() + geom_line() +
+  labs(title = "beta1 vs beta1 hat", 
+    x = "beta1 value", 
+    y = "Average beta1 hat")
+```
+
+```{r}
+sim_results_all_b1 %>% 
+  mutate(reject_null = ifelse(beta1_p<.05,1,0)) %>% 
+  filter(reject_null == 1) %>% 
+  group_by(beta_1) %>% 
+  summarize(avg_b1 = mean(beta1_hat)) %>% 
+  ggplot (aes(x=beta_1, y=avg_b1)) + geom_point() + geom_line() +
+  labs(title = "beta1 vs beta1 hat among p<.05", 
+    x = "beta1 value", 
+    y = "Average beta1 hat")
+```
+
+In all cases, the sample average of β1 is appoximately equal to the true value of β1. However when we filter for cases in which the null hypothesis is rejected, the β1s are no longer equal.
 
 
 
-Repeat the above for β1={1,2,3,4,5,6}, and complete the following:
 
-Make a plot showing the proportion of times the null was rejected (the power of the test) on the y axis and the true value of β2 on the x axis. Describe the association between effect size and power.
 
-Make a plot showing the average estimate of β^1 on the y axis and the true value of β1 on the x axis. Make a second plot (or overlay on the first) the average estimate of β^1 only in samples for which the null was rejected on the y axis and the true value of β1 on the x axis. Is the sample average of β^1 across tests for which the null is rejected approximately equal to the true value of β1? Why or why not?
+
+
+
+
+
+
+
+
+
+
+
+
 
 
