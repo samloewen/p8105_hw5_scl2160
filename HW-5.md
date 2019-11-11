@@ -297,6 +297,9 @@ p3_data = function(n=30, beta0=2, beta1) {
     )
 }
 
+sim_results = rerun(10000,p3_data(beta1 = 0)) %>% 
+  bind_rows()
+
 sim_results_all_b1 = 
   tibble(
     beta_1 = c(0, 1, 2, 3, 4, 5, 6)
