@@ -302,7 +302,7 @@ sim_results_all_b1 =
     beta_1 = c(0, 1, 2, 3, 4, 5, 6)
   ) %>% 
   mutate(
-    output_list = map(.x = beta_1, ~ rerun(1000, p3_data(beta1 = .x))),
+    output_list = map(.x = beta_1, ~ rerun(10000, p3_data(beta1 = .x))),
     output_df = map(output_list, bind_rows)
   ) %>% 
   select(-output_list) %>% 
